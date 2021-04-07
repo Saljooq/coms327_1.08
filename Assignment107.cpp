@@ -11,7 +11,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include "dice.h"
 using namespace std;
 
 
@@ -164,6 +163,7 @@ public:
 vector <monster_desc> monsters;
 vector <obj_desc> odesc;
 
+int roll_dice(int* d);
 int parseObjDesc();
 int get_obj_type(string abil);
 string int_to_objtype(int abil);
@@ -2758,25 +2758,25 @@ int parseObjDesc()
 and determine which ability it corresponds to and converts those to string*/
 int get_obj_type(string abil)
 {
-	if (abil.compare("WEAPON")==0) return 0x1;
-	else if (abil.compare("OFFHAND")==0) return 0x2;
-	else if (abil.compare("RANGED")==0) return 0x4;
-	else if (abil.compare("ARMOR")==0) return 0x8;
-	else if (abil.compare("HELMET")==0) return 0x10;
-	else if (abil.compare("CLOAK")==0) return 0x20;
-	else if (abil.compare("GLOVES")==0) return 0x40;
-	else if (abil.compare("BOOTS")==0) return 0x80;
-	else if (abil.compare("RING")==0) return 0x100;
-	else if (abil.compare("AMULET")==0) return 0x200;
-	else if (abil.compare("LIGHT")==0) return 0x400;
-	else if (abil.compare("SCROLL")==0) return 0x800;
-	else if (abil.compare("BOOK")==0) return 0x1000;
-	else if (abil.compare("FLASK")==0) return 0x2000;
-	else if (abil.compare("GOLD")==0) return 0x4000;
-	else if (abil.compare("AMMUNITION")==0) return 0x8000;
-	else if (abil.compare("FOOD")==0) return 0x10000;
-	else if (abil.compare("WAND")==0) return 0x20000;
-	else if (abil.compare("CONTAINER")==0) return 0x40000;
+	if (abil.compare("WEAPON")==0) return WEAPON;
+	else if (abil.compare("OFFHAND")==0) return OFFHAND;
+	else if (abil.compare("RANGED")==0) return RANGED;
+	else if (abil.compare("ARMOR")==0) return ARMOR;
+	else if (abil.compare("HELMET")==0) return HELMET;
+	else if (abil.compare("CLOAK")==0) return CLOAK;
+	else if (abil.compare("GLOVES")==0) return GLOVES;
+	else if (abil.compare("BOOTS")==0) return BOOTS;
+	else if (abil.compare("RING")==0) return RING;
+	else if (abil.compare("AMULET")==0) return AMULET;
+	else if (abil.compare("LIGHT")==0) return LIGHT;
+	else if (abil.compare("SCROLL")==0) return SCROLL;
+	else if (abil.compare("BOOK")==0) return BOOK;
+	else if (abil.compare("FLASK")==0) return FLASK;
+	else if (abil.compare("GOLD")==0) return GOLD;
+	else if (abil.compare("AMMUNITION")==0) return AMMUNITION;
+	else if (abil.compare("FOOD")==0) return FOOD;
+	else if (abil.compare("WAND")==0) return WAND;
+	else if (abil.compare("CONTAINER")==0) return CONTAINER;
 	else return 0;
 
 }
@@ -2784,25 +2784,25 @@ int get_obj_type(string abil)
 string int_to_objtype(int abil)
 {
 	string abilities = "";
-	if (abil & 0x1) abilities.append("WEAPON ");
-	if (abil & 0x2) abilities.append("OFFHAND ");
-	if (abil & 0x4) abilities.append("RANGED ");
-	if (abil & 0x8) abilities.append("ARMOR ");
-	if (abil & 0x10) abilities.append("HELMET ");
-	if (abil & 0x20) abilities.append("CLOAK ");
-	if (abil & 0x40) abilities.append("GLOVES ");
-	if (abil & 0x80) abilities.append("BOOTS ");
-	if (abil & 0x100) abilities.append("RING ");
-	if (abil & 0x200) abilities.append("AMULET ");
-	if (abil & 0x400) abilities.append("LIGHT ");
-	if (abil & 0x800) abilities.append("SCROLL ");
-	if (abil & 0x1000) abilities.append("BOOK ");
-	if (abil & 0x2000) abilities.append("FLASK ");
-	if (abil & 0x4000) abilities.append("GOLD ");
-	if (abil & 0x8000) abilities.append("AMMUNITION ");
-	if (abil & 0x10000) abilities.append("FOOD ");
-	if (abil & 0x20000) abilities.append("WAND ");
-	if (abil & 0x40000) abilities.append("CONTAINER ");
+	if (abil & WEAPON) abilities.append("WEAPON ");
+	if (abil & OFFHAND) abilities.append("OFFHAND ");
+	if (abil & RANGED) abilities.append("RANGED ");
+	if (abil & ARMOR) abilities.append("ARMOR ");
+	if (abil & HELMET) abilities.append("HELMET ");
+	if (abil & CLOAK) abilities.append("CLOAK ");
+	if (abil & GLOVES) abilities.append("GLOVES ");
+	if (abil & BOOTS) abilities.append("BOOTS ");
+	if (abil & RING) abilities.append("RING ");
+	if (abil & AMULET) abilities.append("AMULET ");
+	if (abil & LIGHT) abilities.append("LIGHT ");
+	if (abil & SCROLL) abilities.append("SCROLL ");
+	if (abil & BOOK) abilities.append("BOOK ");
+	if (abil & FLASK) abilities.append("FLASK ");
+	if (abil & GOLD) abilities.append("GOLD ");
+	if (abil & AMMUNITION) abilities.append("AMMUNITION ");
+	if (abil & FOOD) abilities.append("FOOD ");
+	if (abil & WAND) abilities.append("WAND ");
+	if (abil & CONTAINER) abilities.append("CONTAINER ");
 
 	return abilities;
 
@@ -2831,4 +2831,20 @@ int print_obj_desc()
 		//cout<<"ending print monster "<<count<<"\n\n";
 	}
 	return 0;
+}
+
+int roll_dice(int* d){
+	int base = d[0];
+	int number = d[1];
+	int sides = d[2];
+
+	int total = base;
+
+        if (sides) {
+          for (int i = 0; i < number; i++) {
+            total += 1+ (rand()%sides);
+          }
+        }
+
+        return total;
 }
