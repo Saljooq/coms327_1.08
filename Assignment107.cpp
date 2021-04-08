@@ -574,8 +574,8 @@ int main(int argc, char* argv[])
 	parseMonstersDesc();
 	//print_monster_desc();
 	parseObjDesc();
-	print_obj_desc();
-	return 0;
+	//print_obj_desc();
+	//return 0;
 	/*Processing for 1.07 ends here*/
 	//here we get the argument for the number of monsters
 	j = 0;
@@ -922,12 +922,18 @@ int print_dungeon_limited(PC* pc)
 			//printf("|");
 			for (j = 0; j < xlenMax; j++)
 			{
+				attron(COLOR_PAIR(COLOR_WHITE));
 				mvaddch(i+x,j, grid[j][i]);
 				//if (grid_players[j][i]==NULL) printf("%c", grid[j][i]);
 				if (grid_players[j][i]==NULL) mvaddch( i+x,j, grid[j][i]);
 				else
 				{
-					if (grid_players[j][i]->ifPC==1) mvaddch(i+x,j, '@');//printf("@");
+					if (grid_players[j][i]->ifPC==1)
+					{
+						attron(COLOR_PAIR(COLOR_RED));
+						mvaddch(i+x,j, '@');
+
+					}//printf("@");
 					else
 					{
 						//char* store = sprintf("%x",(grid_players[j][i]->npc->character));
@@ -954,6 +960,7 @@ int print_dungeon_limited(PC* pc)
 		{
 			for (j = 0; j < xlenMax; j++)
 			{
+				attron(COLOR_PAIR(COLOR_WHITE));
 				mvaddch(i+x,j, remembered[j][i]);
 			}
 		}
@@ -969,6 +976,7 @@ int print_dungeon_limited(PC* pc)
 			{
 				if (grid_players[j][i]==NULL)
 				{
+					attron(COLOR_PAIR(COLOR_WHITE));
 					mvaddch( i+x,j, grid[j][i]);
 					remembered[j][i] = grid[j][i];
 				}
@@ -976,6 +984,7 @@ int print_dungeon_limited(PC* pc)
 				{
 					if (grid_players[j][i]->ifPC==1)
 					{
+						attron(COLOR_PAIR(COLOR_RED));
 						mvaddch(i+x,j, '@');//printf("@");
 					}
 					else
@@ -1880,6 +1889,14 @@ void init_terminal()
 	noecho();
 	curs_set(0);
 	keypad(stdscr, TRUE);
+	start_color();
+	init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
+	init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
+	init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
+	init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+	init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
+	init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
 
 }
 /*This is simply use to display msgs like 'You lose' or 'You win' or 'You quit'.*/
