@@ -2,38 +2,28 @@ Name: Saljooq Altaf
 Net ID: saltaf
 
 
-Assignment 1.07
+Assignment 1.08
 
 
-Same program as was submitted for 1.06 but with seven new methods as shown below:
+This is a continuation of 1.01-1.07.
 
-1/ int print_monster_desc() - This method prints all the description of the
-monsters in the monsters vector
-2/ int parseMonstersDesc() - This is used to read into the monster_desc.txt and
-initialize the monsters description class instances, they will be pushed to the monsters vector
-3/ string getColorString(int i) - This is used to get the string color depending
-on the int as per the ncurses library
-4/ string intToAbil(int abil) - This takes the ability bit-vector and tells all the
-abilities in string by conversion - via bit-wise-operations
-5/ int finddice(int* ar, string s) - This converts the string into 3 int set*
-6/ int getColorint(string t) - This is used to the exact int of the color
-depending on the string as per the ncurses library
-7/ int get_abilities(string abil) - This should get us the bit from the bitvector of the abilities
-and determine which ability it corresponds to and converts those to string
+There are 6 new vectors used in this implementation.
+2 are to store object(odesc) and monster description (monsters)
+2 are to keep a tab of which one are used. (They're all reset when we go to a new random dungeon)
+2 are used to keep tab of which of the monsters and objects will never be revitalised in any version of the game (uniq monsters that died or weapon that was picked up)
 
+This program has an object_parser and find_dice implemented. Also, most of the functions previously used
+to instantiate the npc with random variables now used the parsed data in the
+monster_description vector (called monsters).
 
-And one new class of monster description with all the characteristics for initializing
-monsters later on. The dice-decided variables are an array of 3 ints.
+These are the new procedures:
+char getObjChar(int type) - takes a type int of objects and returns the respective character (if no match, it gets '*').
+int populate_dungeon_objects() - This empties the dungeon of any
+int findMonster() - finds an index of monster in vector of monster description as per the specs
+int findObj() - finds an index of obj in vector of object description as per the specs
+int roll_dice(int* d) - this outputs an int from an array of 3 ints.
+int parseObjDesc() - this was implemented to load the text file onto the monsters description vector.
 
-The total changes to main are in line 527-529, the three lines are reproduced below:
-
-parseMonstersDesc();
-print_monster_desc();
-return 0;
-
-NOTE:
-monster_desc.txt sample on piazza ended with '\r' on every line. However, same file
-saved in the ~/.rlg321/ directory did not end with '\r'. My current implementation does not
-take into account ending with '\r', However, an adjustment with 4-5 lines of code can fix this,
-since I have already written the code for that situation.
-Let me know via saltaf@iastate.edu if there's any issue with parsing the file.
+Additionally, print methods have been updated to use colors in the description.
+The monster list also has colors of the respective monsters when rendering their symbol.
+Also, monster list should list names of all the monsters (or the first 18 characters).
