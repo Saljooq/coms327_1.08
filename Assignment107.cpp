@@ -95,16 +95,34 @@ public:
 	int x;
 	int y;
 };
+/*This will be used to parse the monster description from a text file*/
+class monster_desc
+{
+public:
+	string name;
+	string desc;
+	vector<int> color;
+	int speed[3];
+	int abil;
+	int hp[3];
+	int dam[3];
+	char symb;
+	int rrty;
+};
 /*ALL non-pc players data will be stored here*/
 class NPC{
 public:
-	uint8_t character;
+	int hp;//roll over from desc
+	int character; //turns to abil
 	int x;
 	int y;
-	int speed;
+	int speed; //roll over from desc
 	int ifPCseen;
 	int PCx;
 	int PCy;
+	monster_desc *desc;//since sym, name, desc, color are unchanged for instances, we can use the desc
+	int index;//this will be the precise index of the desc in the vector of descriptions
+
 };
 /*These nodes store all the players and their data needed to put them on the heap*/
 class player_node{
@@ -126,20 +144,6 @@ public:
 	player_node* tail;
 	//int size;
 };
-/*This will be used to parse the monster description from a text file*/
-class monster_desc
-{
-public:
-	string name;
-	string desc;
-	vector<int> color;
-	int speed[3];
-	int abil;
-	int hp[3];
-	int dam[3];
-	char symb;
-	int rrty;
-};
 /*This will be used to parse the obj_dec description from a text file*/
 class obj_desc
 {
@@ -160,6 +164,18 @@ public:
 	int rrty;
 };
 
+class obj_node
+{
+	obj_desc* d;
+	int index;
+};
+
+int findMonster();
+
+vector<int>object_used;
+vector<int>object_death;
+vector<int>monster_used;
+vector<int>monster_death;
 vector <monster_desc> monsters;
 vector <obj_desc> odesc;
 
@@ -224,6 +240,7 @@ int visible;
 
 char remembered[xlenMax][ylenMax];//what pc remembers
 
+obj_node *grid_objects[xlenMax][ylenMax];
 player_node *grid_players[xlenMax][ylenMax];//this will be used to store pointers of all the player nodes
 
 int main(int argc, char* argv[])
@@ -238,7 +255,7 @@ int main(int argc, char* argv[])
 
 	visible = 0;
 
-
+	srand(time(0));
 	room *rooms;
 
 	//first we populate the grid with spaces
@@ -574,6 +591,9 @@ int main(int argc, char* argv[])
 	parseMonstersDesc();
 	//print_monster_desc();
 	parseObjDesc();
+
+	for (i = 0; i < monsters.size(); i++) monster_death.push_back(0);
+	for (i = 0; i < monsters.size(); i++) monster_used.push_back(0);
 	//print_obj_desc();
 	//return 0;
 	/*Processing for 1.07 ends here*/
@@ -592,8 +612,9 @@ int main(int argc, char* argv[])
 	if (j) j = atoi(argv[i+1]);
 	else j = 10;
 	//processing for nummon tags beings here
-
-
+	//cout<<"getting num of mons "<<j<<endl;
+	//cout<<"total desc "<<monsters.size()<<endl;
+	//cout<<"monsters death ledger: "<<monster_death.size()<<endl;
 	//printf("\n\n\n");
 	PC* pc;
 	initialize_pc(&pc);//this is where pc gets initialised
@@ -878,6 +899,7 @@ int print_dungeon()
 		//printf("|");
 		for (j = 0; j < xlenMax; j++)
 		{
+			attron(COLOR_PAIR(COLOR_WHITE));
 			mvaddch(i+x,j, grid[j][i]);
 			//if (grid_players[j][i]==NULL) printf("%c", grid[j][i]);
 			if (grid_players[j][i]==NULL) mvaddch( i+x,j, grid[j][i]);
@@ -887,15 +909,17 @@ int print_dungeon()
 				else
 				{
 					//char* store = sprintf("%x",(grid_players[j][i]->npc->character));
-					int npc = grid_players[j][i]->npc->character;
-					if (npc <= 9){
-					npc2=npc+'0';
-					mvaddch(i+x,j, npc2);
-					}
-					else{
-						npc2 = npc+'a'-10;
-						mvaddch(i+x,j, npc2);
-					}
+					char npc = grid_players[j][i]->npc->desc->symb;
+					attron(COLOR_PAIR(grid_players[j][i]->npc->desc->color[0]));
+					mvaddch(i+x,j, npc);
+					// if (npc <= 9){
+					// npc2=npc+'0';
+					// mvaddch(i+x,j, npc2);
+					// }
+					// else{
+					// 	npc2 = npc+'a'-10;
+					// 	mvaddch(i+x,j, npc2);
+					// }
 				}
 			}
 		}
@@ -937,15 +961,18 @@ int print_dungeon_limited(PC* pc)
 					else
 					{
 						//char* store = sprintf("%x",(grid_players[j][i]->npc->character));
-						int npc = grid_players[j][i]->npc->character;
-						if (npc <= 9){
-						npc2=npc+'0';
-						mvaddch(i+x,j, npc2);
-						}
-						else{
-							npc2 = npc+'a'-10;
-							mvaddch(i+x,j, npc2);
-						}
+						//int npc = grid_players[j][i]->npc->character;
+						char npc = grid_players[j][i]->npc->desc->symb;
+						attron(COLOR_PAIR(grid_players[j][i]->npc->desc->color[0]));
+						mvaddch(i+x,j, npc);
+						// if (npc <= 9){
+						// npc2=npc+'0';
+						// mvaddch(i+x,j, npc2);
+						// }
+						// else{
+						// 	npc2 = npc+'a'-10;
+						// 	mvaddch(i+x,j, npc2);
+						// }
 					}
 				}
 			}
@@ -990,15 +1017,19 @@ int print_dungeon_limited(PC* pc)
 					else
 					{
 						//char* store = sprintf("%x",(grid_players[j][i]->npc->character));
-						int npc = grid_players[j][i]->npc->character;
-						if (npc <= 9){
-						npc2=npc+'0';
-						mvaddch(i+x,j, npc2);
-						}
-						else{
-							npc2 = npc+'a'-10;
-							mvaddch(i+x,j, npc2);
-						}
+						// int npc = grid_players[j][i]->npc->character;
+						char npc = grid_players[j][i]->npc->desc->symb;
+						//char color = grid_players[j][i]->npc->desc.color;
+						attron(COLOR_PAIR((char)grid_players[j][i]->npc->desc->color[0]));
+						mvaddch(i+x,j, npc);
+						// if (npc <= 9){
+						// npc2=npc+'0';
+						// mvaddch(i+x,j, npc2);
+						// }
+						// else{
+						// 	npc2 = npc+'a'-10;
+						// 	mvaddch(i+x,j, npc2);
+						// }
 					}
 					remembered[j][i] = grid[j][i];
 				}
@@ -1040,15 +1071,16 @@ int print_teleport(PC* pc, int* x, int* y)
 					else
 					{
 						//char* store = sprintf("%x",(grid_players[j][i]->npc->character));
-						int npc = grid_players[j][i]->npc->character;
-						if (npc <= 9){
-						npc2=npc+'0';
-						mvaddch(i+offset,j, npc2);
-						}
-						else{
-							npc2 = npc+'a'-10;
-							mvaddch(i+offset,j, npc2);
-						}
+						char npc = grid_players[j][i]->npc->desc->symb;
+						mvaddch(i+offset,j, npc);
+						// if (npc <= 9){
+						// npc2=npc+'0';
+						// mvaddch(i+offset,j, npc2);
+						// }
+						// else{
+						// 	npc2 = npc+'a'-10;
+						// 	mvaddch(i+offset,j, npc2);
+						// }
 					}
 				}
 			}
@@ -1460,11 +1492,17 @@ int initialize_players(int n, PC* p)
 
 
 		//printf("x is %d and y is %d\n", k,j);
+		npc->index = findMonster();
+		monster_desc* desc = &monsters[npc->index];
+		npc->desc = desc;
 
-		npc->character = rand()&0xf;//any character netween 0-15
-		npc->speed = 5+ (rand()&0xf);//speed randomly gets selected from 5-20
+		npc->character = desc->abil;//rand()&0xf;//any character netween 0-15
+		//cout<<"variables found"<<endl;
+		npc->speed = roll_dice(desc->speed);//5+ (rand()&0xf);//speed randomly gets selected from 5-20
+		//cout<<"variables found"<<endl;
 		npc-> ifPCseen = 0;
-
+		npc->hp = roll_dice(desc->hp);
+		//cout<<"variables found"<<endl;
 
 		player_node* pn = (player_node*) malloc(sizeof(player_node));
 		pn->ifPC = 0;
@@ -1630,6 +1668,7 @@ int kill_player(player_node* p, player_node_heap* h)
 	{
 		int tempx = p->npc->x;
 		int tempy = p->npc->y;
+		monster_death[p->npc->index] = 1;
 		free(p->npc);
 		free(p);
 		grid_players[tempx][tempy] = NULL;
@@ -1898,6 +1937,9 @@ void init_terminal()
 	init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
 	init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
 
+	//black-black should be converted to white-black as well
+	init_pair(COLOR_BLACK, COLOR_BLACK, COLOR_BLACK);
+
 }
 /*This is simply use to display msgs like 'You lose' or 'You win' or 'You quit'.*/
 int print_end(int success)
@@ -2077,9 +2119,13 @@ int getmonsterlist(player_node_heap* h)
 				int cursor;
 				string player_info = "PLAYER  .";
 				for (cursor = 0; player_info[cursor]!='.'; cursor++) mvaddch(left_offset+count, top_offset+cursor, player_info[cursor]);
-				if (print_node->npc->character<10)
-				mvaddch(left_offset+count, 17+cursor, print_node->npc->character + '0');
-				else mvaddch(left_offset+count, 17+cursor, print_node->npc->character + 'a'-10);
+				// if (print_node->npc->character<10)
+				// mvaddch(left_offset+count, 17+cursor, print_node->npc->character + '0');
+				// else mvaddch(left_offset+count, 17+cursor, print_node->npc->character + 'a'-10);
+				//attron(COLOR_PAIR(COLOR_WHITE));
+				attron(COLOR_PAIR(print_node->npc->desc->color[0]));
+				mvaddch(left_offset+count, 17+cursor, print_node->npc->desc->symb);
+				attron(COLOR_PAIR(COLOR_WHITE));
 				cursor+=5;
 
 				if (pc->y > print_node->npc->y)
@@ -2864,4 +2910,76 @@ int roll_dice(int* d){
         }
 
         return total;
+}
+
+int findMonster(){
+	int i, rare_val;
+
+	//cout<<"finding monsters\n";
+
+	find_monster:
+
+	i = rand()%(monsters.size());
+	rare_val = rand()%100;
+
+	if (monster_used[i]) goto find_monster;
+
+	if (monsters[i].abil & UNIQ) //if monster is unique we go in
+	{
+		//cout<<"monster is unique\n";
+		if (monster_death[i]) //check to see if uniq monster has died
+		{
+			goto find_monster;
+		}
+		else			//uniq monster hasn't died, we need to check if its rare
+		{
+			if (monsters[i].rrty > rare_val) {
+				//cout<<"getting mons "<<monsters[i].name<<endl;
+				monster_used[i] = 1;
+				return i;
+			}
+			else goto find_monster;
+		}
+	}
+	else		//if monster isn't unique
+	{
+		//cout<<"monster not unique\n";
+		//cout<<"rare_val: "<< rare_val <<endl;
+		//cout<<"monster rarity: "<< monsters[i].rrty  <<endl;
+		if (monsters[i].rrty > rare_val) {
+			//cout<<"getting mons "<<monsters[i].name<<endl;
+			return i;
+		}
+		else goto find_monster;
+	}
+
+}
+
+int findObj(){
+	int i, rare_val;
+
+	//cout<<"finding monsters\n";
+
+	find_obj:
+
+	i = rand()%(odesc.size());
+	rare_val = rand()%100;
+
+	if (object_used[i]) goto find_obj;
+
+	//cout<<"monster is unique\n";
+	if (object_death[i]) //check to see if object has died
+	{
+		goto find_obj;
+	}
+	else			//uniq monster hasn't died, we need to check if its rare
+	{
+		if (odesc[i].rrty > rare_val) {
+			//cout<<"getting mons "<<monsters[i].name<<endl;
+			object_used[i] = 1;
+			return i;
+		}
+		else goto find_obj;
+	}
+
 }
